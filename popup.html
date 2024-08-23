@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Redirector Settings</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            width: 400px;
+            padding: 10px;
+        }
+        h1 {
+            font-size: 18px;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        .rule {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            margin-right: 5px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .remove-rule {
+            background-color: #e74c3c;
+        }
+        .remove-rule:hover {
+            background-color: #c0392b;
+        }
+        #status {
+            margin-top: 10px;
+            padding: 5px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .success {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .error {
+            background-color: #e74c3c;
+            color: white;
+        }
+        #test-area {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        #test-results {
+            margin-top: 10px;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-height: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Site Redirector Settings</h1>
+    <form id="options-form">
+        <div id="rules-container"></div>
+        <button type="button" id="add-rule">Add Rule</button>
+        <button type="submit">Save All Rules</button>
+    </form>
+    <div id="status"></div>
+
+    <div id="test-area">
+        <h2>Test URL Matching</h2>
+        <input type="text" id="test-url" placeholder="Enter a URL to test">
+        <button id="test-url-button">Test</button>
+        <div id="test-results"></div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
