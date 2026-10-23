@@ -25,14 +25,15 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.
 <section class="status"><div class="status-title"><span id="phase">第 1 步 · 加载本地语音模型</span><span id="percent">0%</span></div><div class="bar"><div class="fill" id="progress"></div></div><div class="step" id="detail">首次需要通过网络下载引擎和模型，后续通常可以使用缓存。推荐 Wi‑Fi。</div></section>
 <div class="controls"><button class="btn primary" id="load">⬇ 加载语音模型</button><button class="btn primary" id="start" disabled>🎙 开始收音</button><button class="btn red" id="stop" hidden>■ 结束收音</button><button class="btn" id="flush" disabled>✓ 立即翻译当前句</button><button class="btn" id="big">⛶ 大字幕</button></div>
 <div id="notice" class="message" role="alert"></div>
-<p class="explain">英语仍然实时显示；中文会等短句合并完成、说话停顿后统一翻译，避免碎片化。停顿时间可调，也可点击「立即翻译当前句」。模型需先加载；中文翻译需要联网。请保持网页位于前台。</p>
-<div class="row-settings"><label>停顿后翻译<select id="pause"><option value="1800">1.8 秒 · 较快</option><option value="3000">3 秒 · 句子完整</option><option value="4500">4.5 秒 · 长句</option><option value="6500" selected>6.5 秒 · 演讲（默认）</option></select></label><label>口音兼容<select id="model" aria-describedby="accentHint"><option value="tiny">标准模式 · 速度优先</option><option value="small">多口音增强 · 更准（推荐）</option><option value="medium">高精度模式 · 较耗性能</option></select></label><label>中文字幕大小<input type="range" min="22" max="52" value="34" id="size"><span id="sizevalue">34</span></label></div>
+<p class="explain">英语仍实时显示；中文在英语片段合并及停顿后翻译。新增整段翻译优先、备用翻译服务、长句完整保留、英文原文纠错并重译。停顿时间仍默认为 6.5 秒。模型需先加载；中文翻译需要联网。</p>
+<div class="row-settings"><label>停顿后翻译<select id="pause"><option value="1800">1.8 秒 · 较快</option><option value="3000">3 秒 · 句子完整</option><option value="4500">4.5 秒 · 长句</option><option value="6500" selected>6.5 秒 · 演讲（默认）</option></select></label><label>口音兼容<select id="model" aria-describedby="accentHint"><option value="tiny">标准模式 · 速度优先</option><option value="small">多口音增强 · 更准（推荐）</option><option value="medium">高精度模式 · 较耗性能</option></select></label><label>中文字幕大小<input type="range" min="22" max="52" value="34" id="size"><span id="sizevalue">34</span></label><label>翻译引擎<select id="translator"><option value="smart" selected>整段翻译优先（实验）</option><option value="memory">MyMemory（兼容）</option></select></label></div>
+<p class="explain" id="translationHint">整段优先会尝试 SimplyTranslate AI，失败时自动回退到 MyMemory。整段接口为第三方免费服务，尚未在你的 iPhone 上验证效果，不能保证比原来更准确。</p>
 <p class="explain" id="accentHint">标准模式使用 Tiny Streaming；多口音增强改用 Small Streaming；高精度改用 Medium Streaming。较大模型可能改善不熟悉的发音识别，但不保证所有地区口音；模型更大，首次下载与手机运行压力更高。</p>
 <div class="block-header"><h2>双语字幕记录 <span class="muted" id="entries" style="font-size:12px">0 条</span></h2><div class="aux"><button class="tiny" id="copy">复制</button><button class="tiny" id="txt">TXT</button><button class="tiny" id="srt">SRT</button></div></div>
 <section id="history" class="history"><div class="empty">识别完成的英语和中文翻译会保存到当前页面，供复制或导出。</div></section>
 <div class="box2"><h3>🎚 单独检测手机麦克风</h3><p>如果没有字幕，先点击测试：对着手机说话，下面的音量条应该跟着变化。这一步不依赖语音识别模型。</p><div class="diag"><button class="tiny" id="testmic">检测麦克风（8 秒）</button><span id="micstatus" class="muted">未测试</span></div><div class="meter"><div id="meterfill" class="meterfill"></div></div><div class="step">若音量条不动，请检查 Safari 的麦克风权限、耳机输入、静音设备或系统限制。</div></div>
 <div class="box2"><h3>💬 不用麦克风也能检测中文翻译</h3><p>如果英文能识别而中文不出现，可用这里单独测试网络翻译。</p><div class="diag"><input id="sample" value="Welcome to today's presentation." aria-label="测试英文文本"><button class="tiny" id="testzh">翻译测试</button></div></div>
-<p class="hint">隐私：设备端识别时，语音音频不会上传至本应用服务器；首次会从 Moonshine 下载模型。英文文本将发送给 MyMemory 进行中译，不适合涉及机密的会议。浏览器后台或锁屏可能中断收音。本页面不支持直接收取其他 App 的内部声音。<br>实验版：对不同 iPhone 机型、移动网络和浏览器尚未完成实机验证。如遇性能、模型下载或权限问题，页面会展示错误信息。</p>
+<p class="hint">隐私：设备端识别时，语音音频不会上传至本应用服务器；首次会从 Moonshine 下载模型。所识别的英文文本会根据你的翻译引擎选择发送给 SimplyTranslate AI 和／或 MyMemory（第三方服务），不适合涉及机密的会议。浏览器后台或锁屏可能中断收音。本页面不支持直接收取其他 App 的内部声音。<br>实验版：对不同 iPhone 机型、移动网络和浏览器尚未完成实机验证。如遇性能、模型下载或权限问题，页面会展示错误信息。</p>
 </div>
 <script>
 /* A scoped service worker adds COOP/COEP to top-level navigations.
@@ -77,6 +78,8 @@ const MODEL_LABELS={tiny:"标准模式",small:"多口音增强",medium:"高精�
 function restoreAccentMode(){try{const saved=localStorage.getItem(ACCENT_MODE_KEY);if(Object.prototype.hasOwnProperty.call(MODEL_LABELS,saved)){modelChoice=saved;$('model').value=saved;}}catch(e){}updateAccentHint();}
 function updateAccentHint(){const mode=$('model').value;$('accentHint').textContent=mode==="tiny"?"当前：标准模式（Tiny Streaming）。下载快、资源占用较少；若遇到印度英语、东南亚英语或其他口音识别困难，可切换到多口音增强。":mode==="small"?"当前：多口音增强（Small Streaming）。较高容量模型通常识别更准确，可能改善部分非母语英语口音；首次下载更大，需要更多内存和运算。":"当前：高精度模式（Medium Streaming）。更大的英语识别模型，但下载更慢、耗电和内存占用更高；部分 iPhone 可能无法流畅运行。";}
 let pendingParts=[],pendingTimer=null,pendingSince=0,pendingStart=0,lastShownRow=null,stopping=false;
+let translatorMode='smart',backupNoticeShown=false;
+const TRANSLATOR_KEY='ll2-translation-mode';
 function notify(msg,ok=false){const e=$('notice');e.textContent=msg;e.className='message show'+(ok?' good':'');}
 function clearNotice(){$('notice').className='message';}
 function setState(text,on=false){$('state').textContent=text;$('state').classList.toggle('live',on);}
@@ -88,7 +91,50 @@ function seconds(){return startedAt?Math.max(0,(performance.now()-startedAt)/100
 function mmss(t){t=Math.floor(Math.max(0,t));return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');}
 function timestamp(t){let m=Math.max(0,Math.round(t*1000));return [Math.floor(m/3600000),Math.floor(m%3600000/60000),Math.floor(m%60000/1000)].map(n=>String(n).padStart(2,'0')).join(':')+','+String(m%1000).padStart(3,'0');}
 function clock(){$('time').textContent=mmss(seconds())+' · '+rows.length+' 句';}
-function showRows(){clock();$('entries').textContent=rows.length+' 条';let root=$('history');root.replaceChildren();if(!rows.length){let empty=document.createElement('div');empty.className='empty';empty.textContent='尚无记录，开始说英文后会在这里出现。';root.append(empty);return;}let f=document.createDocumentFragment();for(let r of rows){let it=document.createElement('div');it.className='item',time=document.createElement('small');time.textContent=mmss(r.start);let en=document.createElement('div');en.className='source';en.textContent=r.en;let zh=document.createElement('div');zh.className='target';zh.textContent=r.zh||'翻译中…';it.append(time,en,zh);f.append(it);}root.append(f);root.scrollTop=root.scrollHeight;}
+function showRows(){
+ clock();$('entries').textContent=rows.length+' 条';
+ const root=$('history');root.replaceChildren();
+ if(!rows.length){const empty=document.createElement('div');empty.className='empty';empty.textContent='尚无记录，开始说英文后会在这里出现。';root.append(empty);return;}
+ const fragment=document.createDocumentFragment();
+ rows.forEach((r)=>{
+  const item=document.createElement('div');item.className='item';
+  const time=document.createElement('small');time.textContent=mmss(r.start)+(r.engine?' · '+r.engine:'');
+  const en=document.createElement('div');en.className='source';en.textContent=r.en;
+  const zh=document.createElement('div');zh.className='target';zh.textContent=r.zh||(r.pending?'正在整句翻译…':'等待翻译…');
+  const edit=document.createElement('button');edit.type='button';edit.className='tiny';edit.style.marginTop='8px';edit.textContent='✎ 修正英文并重译';
+  edit.addEventListener('click',()=>{
+    const amended=window.prompt('修正识别的英文原文，确认后重新翻译：',r.en);
+    if(amended===null)return;
+    const cleaned=clean(amended);
+    if(!cleaned)return notify('英文内容不能为空。');
+    r.en=cleaned;translateRow(r);
+  });
+  item.append(time,en,zh,edit);fragment.append(item);
+ });
+ root.append(fragment);root.scrollTop=root.scrollHeight;
+}
+async function translateRow(row){
+ row.revision=(row.revision||0)+1;
+ const currentRevision=row.revision;
+ row.pending=true;row.zh='';row.engine='';
+ showRows();
+ if(row===lastShownRow&&!pendingParts.length&&!interim)zhText('正在整句翻译…');
+ try{
+  const translated=await translate(row.en);
+  if(currentRevision!==row.revision)return;
+  row.zh=translated.text;row.engine=translated.engine;row.pending=false;
+  if(row===lastShownRow&&!pendingParts.length&&!interim)zhText(row.zh);
+  if(translated.fallback&&!backupNoticeShown){
+    backupNoticeShown=true;
+    notify('整段翻译接口当前不可用，已自动改用 MyMemory。译文可能不如预期；可在「翻译引擎」中手动切换。');
+  }
+ }catch(err){
+  if(currentRevision!==row.revision)return;
+  row.zh='翻译失败：'+String(err.message||err);row.pending=false;
+  if(row===lastShownRow&&!pendingParts.length&&!interim)zhText(row.zh);
+  notify('英文已识别，但中文翻译失败：'+String(err.message||err));
+ }finally{if(currentRevision===row.revision)showRows();}
+}
 function badAudio(){return !navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.isSecureContext}
 /* onText is an unstable in-progress hypothesis; onLine contains a finalized speech
    segment.  Accumulate finalized segments and translate only after a user-selected
@@ -120,16 +166,7 @@ function flushSentence(){
   rows.push(row);lastShownRow=row;showRows();
   if(!interim)enText(sentence);
   zhText('整句已确认，正在翻译…');
-  translate(sentence).then(zh=>{
-    row.zh=zh;
-    if(row===lastShownRow&&!pendingParts.length&&!interim)zhText(zh);
-    showRows();
-  }).catch(err=>{
-    row.zh='翻译失败：'+String(err.message||err);
-    if(row===lastShownRow&&!pendingParts.length&&!interim)zhText(row.zh);
-    showRows();
-    notify('英语已完整识别，但中文翻译失败：'+String(err.message||err));
-  });
+  translateRow(row);
 }
 function onText(text){
   if(!listening)return;
@@ -161,7 +198,72 @@ function onLine(line){
   displayPending();
   scheduleSentence();
 }
-async function translate(text){let url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(text.slice(0,450))+'&langpair=en%7Czh-CN';let res=await fetch(url,{cache:'no-store'});if(!res.ok)throw Error('翻译接口 '+res.status);let data=await res.json();if(data.responseStatus!==200||!data.responseData||!data.responseData.translatedText)throw Error(data.responseDetails||'没有返回译文');let tmp=document.createElement('textarea');tmp.innerHTML=String(data.responseData.translatedText);return tmp.value;}
+function utf8Bytes(text){return new TextEncoder().encode(text).length;}
+function splitByBytes(text,maxBytes=450){
+ const parts=[];let current='';
+ for(const rawWord of clean(text).split(/\s+/)){
+  if(!rawWord)continue;
+  // Guarantee no word can cause silent truncation, even when it includes Unicode.
+  const cps=[...rawWord];let rest='',words=[];
+  for(const cp of cps){
+   if(utf8Bytes(rest+cp)>maxBytes){if(rest)words.push(rest);rest=cp;}
+   else rest+=cp;
+  }
+  if(rest)words.push(rest);
+  for(const word of words){
+   const proposed=current?current+' '+word:word;
+   if(utf8Bytes(proposed)>maxBytes){if(current)parts.push(current);current=word;}
+   else current=proposed;
+  }
+ }
+ if(current)parts.push(current);
+ return parts;
+}
+async function translateMyMemory(text){
+ // MyMemory limits q to 500 UTF-8 bytes. Never use substring/slice to
+ // silently delete the end of a long spoken sentence.
+ const chunks=splitByBytes(text,450),out=[];
+ for(const part of chunks){
+  const u=new URL('https://api.mymemory.translated.net/get');
+  u.searchParams.set('q',part);u.searchParams.set('langpair','en|zh-CN');
+  const r=await fetch(u.toString(),{cache:'no-store'});
+  if(!r.ok)throw Error('MyMemory HTTP '+r.status);
+  const d=await r.json();
+  if(Number(d.responseStatus)!==200||!d.responseData||!d.responseData.translatedText)throw Error(d.responseDetails||'MyMemory 未返回有效译文');
+  const decoder=document.createElement('textarea');
+  decoder.innerHTML=String(d.responseData.translatedText);
+  const zh=decoder.value;
+  if(/MYMEMORY WARNING|YOU USED ALL/i.test(zh))throw Error('MyMemory 今日免费额度已用完');
+  out.push(zh);
+ }
+ return out.join(' ').trim();
+}
+async function translateFullText(text){
+ const controller=new AbortController();
+ const timeout=setTimeout(()=>controller.abort(),11000);
+ try{
+  const r=await fetch('https://api.simplytranslate.ai/translate',{
+   method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,
+   body:JSON.stringify({text,from:'en',to:'zh-cn'})
+  });
+  if(!r.ok)throw Error('整段接口 HTTP '+r.status);
+  const d=await r.json();
+  if(!d||typeof d.result!=='string'||!d.result.trim())throw Error(d&&d.error||'整段接口没有返回译文');
+  return d.result.trim();
+ }finally{clearTimeout(timeout);}
+}
+async function translate(text){
+ const source=clean(text);if(!source)throw Error('英文为空');
+ if(translatorMode==='memory')return {text:await translateMyMemory(source),engine:'MyMemory',fallback:false};
+ if(source.length<=5000){
+  try{return {text:await translateFullText(source),engine:'整段翻译',fallback:false};}
+  catch(e){const fallback=await translateMyMemory(source);return {text:fallback,engine:'MyMemory（备用）',fallback:true};}
+ }
+ // The alternative service accepts <=5000 characters; preserve ALL content.
+ const parts=splitByBytes(source,450),results=[];
+ for(const part of parts){results.push(await translateFullText(part));}
+ return {text:results.join(' ').trim(),engine:'整段翻译（分段）',fallback:false};
+}
 async function loadModel(){if(window.crossOriginIsolated!==true)return notify('本地语音引擎尚未获得必要的跨源隔离权限。请刷新页面，或使用下方「检测麦克风」区分麦克风与模型问题。');if(loading||listening)return;if(loaded)return notify('模型已经准备好了，点击「开始收音」。',true);clearNotice();if(badAudio())return notify('当前页面无法使用 HTTPS 麦克风接口。请在 Safari 中直接访问 HTTPS 链接。');loading=true;$('load').disabled=true;$('model').disabled=true;setState('正在加载模型');setStage('第 1 步 · 下载语音模型','正在连接 '+(MODEL_LABELS[modelChoice]||'英语')+' 所需的模型文件…',1);
 try{
 if(!Moonshine){const module=await import(SDK);if(!module.MicTranscriber||!module.ModelArch)throw Error('语音引擎组件不可用');Moonshine=module;}
@@ -189,8 +291,11 @@ $('size').addEventListener('input',e=>{document.documentElement.style.setPropert
 $('copy').addEventListener('click',async()=>{if(!rows.length)return notify('还没有可复制的字幕。');try{await navigator.clipboard.writeText(exportText());notify('双语字幕已复制。',true);}catch(e){notify('复制失败，可以用 TXT 导出。');}});
 $('txt').addEventListener('click',()=>{if(!rows.length)return notify('还没有字幕记录。');download(exportText(),'livel ingo-v2.txt'.replace(' ',''));});
 $('srt').addEventListener('click',()=>{if(!rows.length)return notify('还没有字幕记录。');download(rows.map((r,i)=>String(i+1)+'\n'+timestamp(r.start)+' --> '+timestamp(r.end)+'\n'+r.en+'\n'+r.zh+'\n').join('\n'),'livel ingo-v2.srt'.replace(' ',''));});
-$('testzh').addEventListener('click',async()=>{let v=clean($('sample').value);if(!v)return notify('请输入英文。');$('testzh').disabled=true;clearNotice();try{let zh=await translate(v);enText(v);zhText(zh);notify('中译接口可用。',true);}catch(e){notify('翻译服务失败：'+String(e.message||e));}finally{$('testzh').disabled=false;}});
+$('testzh').addEventListener('click',async()=>{let v=clean($('sample').value);if(!v)return notify('请输入英文。');$('testzh').disabled=true;clearNotice();try{let result=await translate(v);enText(v);zhText(result.text);notify('翻译完成，实际使用：'+result.engine+'。',true);}catch(e){notify('翻译服务失败：'+String(e.message||e));}finally{$('testzh').disabled=false;}});
 restoreAccentMode();
+try{const saved=localStorage.getItem(TRANSLATOR_KEY);if(saved==='smart'||saved==='memory')translatorMode=saved;}catch(e){}
+$('translator').value=translatorMode;
+$('translator').addEventListener('change',e=>{translatorMode=e.target.value;backupNoticeShown=false;try{localStorage.setItem(TRANSLATOR_KEY,translatorMode);}catch(err){}$('translationHint').textContent=translatorMode==='smart'?'整段优先：先尝试 SimplyTranslate AI；若接口不通则回退到 MyMemory。实际使用的服务会显示在每条记录旁。':'兼容模式：仅使用 MyMemory 翻译（单次输入最多 500 字节，超长内容自动无损分段）。';});
 if(!window.isSecureContext)notify('当前站点不是安全的 HTTPS 页面，无法申请麦克风权限。');else if(window.crossOriginIsolated!==true){$('load').disabled=true;setState('正在初始化运行环境');setStage('准备本地识别引擎','将尝试通过本站 Service Worker 激活跨源隔离，页面可能自动刷新一次。',0);setTimeout(()=>{if(window.crossOriginIsolated!==true){setState('运行环境尚未就绪');setStage('需要跨源隔离','本地模型需要跨源隔离；若当前页面无法启用，请先用下面的麦克风测试确认是否收音。',0);$('load').disabled=true;}},4500)}
 window.addEventListener('pagehide',()=>{if(micTestStream)micTestStream.getTracks().forEach(t=>t.stop());});
 </script></body></html>
