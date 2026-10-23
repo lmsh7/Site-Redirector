@@ -128,7 +128,7 @@ async function translateRow(row){
   if(row===lastShownRow&&!pendingParts.length&&!interim)zhText(row.zh);
   if(translated.fallback&&!backupNoticeShown){
     backupNoticeShown=true;
-    notify('整段翻译接口当前不可用，已自动改用 MyMemory。译文可能不如预期；可在「翻译引擎」中手动切换。');
+    notify('首选翻译源不可用，已自动使用 '+translated.engine+'。若译文有误，可修正英文重译，或打开 Google 翻译对照。',true);
   }
  }catch(err){
   if(currentRevision!==row.revision)return;
