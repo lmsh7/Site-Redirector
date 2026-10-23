@@ -23,11 +23,11 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.
 <div style="margin-top:24px"><div class="label">ENGLISH · 正在识别</div><div class="en faded" id="en">先点击「加载语音模型」，再点击「开始收音」。</div></div>
 <div class="line"></div><div class="label zh">中文 · 实时翻译</div><div class="zhtext faded" id="zh">听到英语后，这里显示对应的中文译文。</div></section>
 <section class="status"><div class="status-title"><span id="phase">第 1 步 · 加载本地语音模型</span><span id="percent">0%</span></div><div class="bar"><div class="fill" id="progress"></div></div><div class="step" id="detail">首次需要通过网络下载引擎和模型，后续通常可以使用缓存。推荐 Wi‑Fi。</div></section>
-<div class="controls"><button class="btn primary" id="load">⬇ 加载语音模型</button><button class="btn primary" id="start" disabled>🎙 开始收音</button><button class="btn red" id="stop" hidden>■ 结束收音</button><button class="btn" id="flush" disabled>✓ 立即翻译当前句</button><button class="btn" id="big">⛶ 大字幕</button></div>
+<div class="controls"><button class="btn primary" id="load">⬇ 加载语音模型</button><button class="btn primary" id="start" disabled>🎙 开始收音</button><button class="btn red" id="stop" hidden>■ 结束收音</button><button class="btn" id="flush" disabled>✓ 立即翻译当前句</button><button class="btn" id="accurate" type="button">✦ 一键切换 Small 高准确度模型</button><button class="btn" id="big">⛶ 大字幕</button></div>
 <div id="notice" class="message" role="alert"></div>
 <p class="explain">英语仍实时显示；中文在英语片段合并及停顿后翻译。新增整段翻译优先、备用翻译服务、长句完整保留、英文原文纠错并重译。停顿时间仍默认为 6.5 秒。模型需先加载；中文翻译需要联网。</p>
-<div class="row-settings"><label>停顿后翻译<select id="pause"><option value="1800">1.8 秒 · 较快</option><option value="3000">3 秒 · 句子完整</option><option value="4500">4.5 秒 · 长句</option><option value="6500" selected>6.5 秒 · 演讲（默认）</option></select></label><label>口音兼容<select id="model" aria-describedby="accentHint"><option value="tiny">标准模式 · 速度优先</option><option value="small">多口音增强 · 更准（推荐）</option><option value="medium">高精度模式 · 较耗性能</option></select></label><label>中文字幕大小<input type="range" min="22" max="52" value="34" id="size"><span id="sizevalue">34</span></label><label>翻译引擎<select id="translator"><option value="smart" selected>整段翻译优先（实验）</option><option value="memory">MyMemory（兼容）</option></select></label></div>
-<p class="explain" id="translationHint">整段优先会尝试 SimplyTranslate AI，失败时自动回退到 MyMemory。整段接口为第三方免费服务，尚未在你的 iPhone 上验证效果，不能保证比原来更准确。</p>
+<div class="row-settings"><label>停顿后翻译<select id="pause"><option value="1800">1.8 秒 · 较快</option><option value="3000">3 秒 · 句子完整</option><option value="4500">4.5 秒 · 长句</option><option value="6500" selected>6.5 秒 · 演讲（默认）</option></select></label><label>口音兼容<select id="model" aria-describedby="accentHint"><option value="tiny">标准模式 · 速度优先</option><option value="small" selected>多口音增强 · 更准（推荐）</option><option value="medium">高精度模式 · 较耗性能</option></select></label><label>中文字幕大小<input type="range" min="22" max="52" value="34" id="size"><span id="sizevalue">34</span></label><label>翻译引擎<select id="translator"><option value="auto" selected>多个翻译源自动容错</option><option value="smart">SimplyTranslate 优先</option><option value="memory">MyMemory（有限额）</option></select></label></div>
+<p class="explain" id="translationHint">现在会尝试多个公开翻译源，并在 HTTP 429 时暂停请求。所有免费翻译源均可能限流或不可用；如果自动翻译失败，可在每条记录下点击「Google 翻译」查看译文。</p>
 <p class="explain" id="accentHint">标准模式使用 Tiny Streaming；多口音增强改用 Small Streaming；高精度改用 Medium Streaming。较大模型可能改善不熟悉的发音识别，但不保证所有地区口音；模型更大，首次下载与手机运行压力更高。</p>
 <div class="block-header"><h2>双语字幕记录 <span class="muted" id="entries" style="font-size:12px">0 条</span></h2><div class="aux"><button class="tiny" id="copy">复制</button><button class="tiny" id="txt">TXT</button><button class="tiny" id="srt">SRT</button></div></div>
 <section id="history" class="history"><div class="empty">识别完成的英语和中文翻译会保存到当前页面，供复制或导出。</div></section>
@@ -72,13 +72,14 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.
 const $=(id)=>document.getElementById(id);
 const SDK='https://cdn.jsdelivr.net/npm/@moonshine-ai/moonshine-wasm@0.1.5/dist/index.js';
 let Moonshine=null,mic=null,loaded=false,loading=false,listening=false,rows=[],startedAt=0,timer=null,session=0,interim='',translateCount=0;
-let micTestStream=null,micTestContext=null,micTestTimer=null,raf=null,modelChoice='tiny';
+let micTestStream=null,micTestContext=null,micTestTimer=null,raf=null,modelChoice='small';
 const ACCENT_MODE_KEY="livel ingo2-accent-mode".replace(" ","");
 const MODEL_LABELS={tiny:"标准模式",small:"多口音增强",medium:"高精度模式"};
 function restoreAccentMode(){try{const saved=localStorage.getItem(ACCENT_MODE_KEY);if(Object.prototype.hasOwnProperty.call(MODEL_LABELS,saved)){modelChoice=saved;$('model').value=saved;}}catch(e){}updateAccentHint();}
 function updateAccentHint(){const mode=$('model').value;$('accentHint').textContent=mode==="tiny"?"当前：标准模式（Tiny Streaming）。下载快、资源占用较少；若遇到印度英语、东南亚英语或其他口音识别困难，可切换到多口音增强。":mode==="small"?"当前：多口音增强（Small Streaming）。较高容量模型通常识别更准确，可能改善部分非母语英语口音；首次下载更大，需要更多内存和运算。":"当前：高精度模式（Medium Streaming）。更大的英语识别模型，但下载更慢、耗电和内存占用更高；部分 iPhone 可能无法流畅运行。";}
 let pendingParts=[],pendingTimer=null,pendingSince=0,pendingStart=0,lastShownRow=null,stopping=false;
-let translatorMode='smart',backupNoticeShown=false;
+let translatorMode='auto',backupNoticeShown=false;
+let disabledUntil={simply:0,lingva:0,memory:0};
 const TRANSLATOR_KEY='ll2-translation-mode';
 function notify(msg,ok=false){const e=$('notice');e.textContent=msg;e.className='message show'+(ok?' good':'');}
 function clearNotice(){$('notice').className='message';}
@@ -102,6 +103,7 @@ function showRows(){
   const en=document.createElement('div');en.className='source';en.textContent=r.en;
   const zh=document.createElement('div');zh.className='target';zh.textContent=r.zh||(r.pending?'正在整句翻译…':'等待翻译…');
   const edit=document.createElement('button');edit.type='button';edit.className='tiny';edit.style.marginTop='8px';edit.textContent='✎ 修正英文并重译';
+  const external=document.createElement('a');external.className='tiny';external.textContent='↗ Google 翻译';external.style.cssText='display:inline-block;margin:8px 0 0 8px;text-decoration:none';external.href='https://translate.google.com/?sl=en&tl=zh-CN&op=translate&text='+encodeURIComponent(r.en);external.target='_blank';external.rel='noopener noreferrer';
   edit.addEventListener('click',()=>{
     const amended=window.prompt('修正识别的英文原文，确认后重新翻译：',r.en);
     if(amended===null)return;
@@ -109,7 +111,7 @@ function showRows(){
     if(!cleaned)return notify('英文内容不能为空。');
     r.en=cleaned;translateRow(r);
   });
-  item.append(time,en,zh,edit);fragment.append(item);
+  item.append(time,en,zh,edit,external);fragment.append(item);
  });
  root.append(fragment);root.scrollTop=root.scrollHeight;
 }
@@ -130,9 +132,9 @@ async function translateRow(row){
   }
  }catch(err){
   if(currentRevision!==row.revision)return;
-  row.zh='翻译失败：'+String(err.message||err);row.pending=false;
+  row.zh='自动翻译暂不可用（'+String(err.message||err)+'），可点击下方 Google 翻译查看。';row.pending=false;
   if(row===lastShownRow&&!pendingParts.length&&!interim)zhText(row.zh);
-  notify('英文已识别，但中文翻译失败：'+String(err.message||err));
+  notify('英文已识别并保存，但自动翻译接口暂不可用：'+String(err.message||err)+'。请点击每条字幕下方「Google 翻译」；英语识别错误则先用「修正英文并重译」。');
  }finally{if(currentRevision===row.revision)showRows();}
 }
 function badAudio(){return !navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.isSecureContext}
@@ -219,50 +221,73 @@ function splitByBytes(text,maxBytes=450){
  if(current)parts.push(current);
  return parts;
 }
+
+function setProviderCooldown(name,response){
+ const status=response&&response.status||429;
+ const retry=response&&response.headers?Number(response.headers.get('Retry-After')):NaN;
+ const duration=status===429?(Number.isFinite(retry)&&retry>0?Math.min(retry*1000,3600000):1800000):240000;
+ disabledUntil[name]=Date.now()+duration;
+}
+function canTry(name){return Date.now()>=disabledUntil[name];}
+async function fetchLimited(url,options={},limit=6500){
+ const abort=new AbortController();const timeout=setTimeout(()=>abort.abort(),limit);
+ try{return await fetch(url,{...options,signal:abort.signal});}finally{clearTimeout(timeout);}
+}
 async function translateMyMemory(text){
- // MyMemory limits q to 500 UTF-8 bytes. Never use substring/slice to
- // silently delete the end of a long spoken sentence.
- const chunks=splitByBytes(text,450),out=[];
- for(const part of chunks){
+ if(!canTry('memory'))throw Error('MyMemory 429 限流冷却中');
+ const out=[];
+ for(const part of splitByBytes(text,450)){
+  if(!canTry('memory'))throw Error('MyMemory 429 限流冷却中');
   const u=new URL('https://api.mymemory.translated.net/get');
   u.searchParams.set('q',part);u.searchParams.set('langpair','en|zh-CN');
-  const r=await fetch(u.toString(),{cache:'no-store'});
+  const r=await fetchLimited(u.toString(),{cache:'no-store'});
+  if(r.status===429){setProviderCooldown('memory',r);throw Error('MyMemory HTTP 429（已暂停重复请求）');}
   if(!r.ok)throw Error('MyMemory HTTP '+r.status);
   const d=await r.json();
-  if(Number(d.responseStatus)!==200||!d.responseData||!d.responseData.translatedText)throw Error(d.responseDetails||'MyMemory 未返回有效译文');
-  const decoder=document.createElement('textarea');
-  decoder.innerHTML=String(d.responseData.translatedText);
-  const zh=decoder.value;
-  if(/MYMEMORY WARNING|YOU USED ALL/i.test(zh))throw Error('MyMemory 今日免费额度已用完');
-  out.push(zh);
+  if(Number(d.responseStatus)!==200||!d.responseData||!d.responseData.translatedText)throw Error(d.responseDetails||'MyMemory 无译文');
+  const decoder=document.createElement('textarea');decoder.innerHTML=String(d.responseData.translatedText);
+  if(/MYMEMORY WARNING|YOU USED ALL/i.test(decoder.value)){setProviderCooldown('memory');throw Error('MyMemory 免费额度不足');}
+  out.push(decoder.value);
  }
  return out.join(' ').trim();
 }
 async function translateFullText(text){
- const controller=new AbortController();
- const timeout=setTimeout(()=>controller.abort(),11000);
- try{
-  const r=await fetch('https://api.simplytranslate.ai/translate',{
-   method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,
-   body:JSON.stringify({text,from:'en',to:'zh-cn'})
-  });
-  if(!r.ok)throw Error('整段接口 HTTP '+r.status);
-  const d=await r.json();
-  if(!d||typeof d.result!=='string'||!d.result.trim())throw Error(d&&d.error||'整段接口没有返回译文');
-  return d.result.trim();
- }finally{clearTimeout(timeout);}
+ if(!canTry('simply'))throw Error('SimplyTranslate 暂时冷却');
+ const r=await fetchLimited('https://api.simplytranslate.ai/translate',{
+  method:'POST',cache:'no-store',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({text,from:'en',to:'zh-cn'})
+ },7000);
+ if(!r.ok){if([403,429].includes(r.status))setProviderCooldown('simply',r);throw Error('SimplyTranslate HTTP '+r.status);}
+ const d=await r.json();
+ if(!d||typeof d.result!=='string'||!d.result.trim())throw Error('SimplyTranslate 无译文');
+ return d.result.trim();
+}
+async function translateLingva(text){
+ if(!canTry('lingva'))throw Error('Lingva 暂时冷却');
+ const r=await fetchLimited('https://lingva.ml/api/v1/en/zh/'+encodeURIComponent(text),{cache:'no-store'},5700);
+ if(!r.ok){if([403,429].includes(r.status))setProviderCooldown('lingva',r);throw Error('Lingva HTTP '+r.status);}
+ const d=await r.json();
+ if(!d||typeof d.translation!=='string'||!d.translation.trim())throw Error('Lingva 无译文');
+ return d.translation.trim();
 }
 async function translate(text){
  const source=clean(text);if(!source)throw Error('英文为空');
- if(translatorMode==='memory')return {text:await translateMyMemory(source),engine:'MyMemory',fallback:false};
- if(source.length<=5000){
-  try{return {text:await translateFullText(source),engine:'整段翻译',fallback:false};}
-  catch(e){const fallback=await translateMyMemory(source);return {text:fallback,engine:'MyMemory（备用）',fallback:true};}
+ const order=translatorMode==='memory'?['memory']:translatorMode==='smart'?['simply','lingva','memory']:['lingva','simply','memory'];
+ const engines={simply:'SimplyTranslate',lingva:'Lingva 社区',memory:'MyMemory'};
+ const errors=[];
+ for(const provider of order){
+  if(!canTry(provider)){errors.push(engines[provider]+' 暂时冷却');continue;}
+  try{
+   const parts=splitByBytes(source,provider==='memory'?450:provider==='lingva'?1350:4200),translations=[];
+   if(provider==='memory')translations.push(await translateMyMemory(source));
+   else for(const part of parts)translations.push(await (provider==='simply'?translateFullText(part):translateLingva(part)));
+   return{text:translations.join(' ').trim(),engine:engines[provider],fallback:provider!==order[0]};
+  }catch(e){
+   errors.push(engines[provider]+': '+String(e.message||e));
+   if(provider!=='memory'&&canTry(provider))disabledUntil[provider]=Date.now()+240000;
+  }
  }
- // The alternative service accepts <=5000 characters; preserve ALL content.
- const parts=splitByBytes(source,450),results=[];
- for(const part of parts){results.push(await translateFullText(part));}
- return {text:results.join(' ').trim(),engine:'整段翻译（分段）',fallback:false};
+ throw Error(errors.join('；'));
 }
 async function loadModel(){if(window.crossOriginIsolated!==true)return notify('本地语音引擎尚未获得必要的跨源隔离权限。请刷新页面，或使用下方「检测麦克风」区分麦克风与模型问题。');if(loading||listening)return;if(loaded)return notify('模型已经准备好了，点击「开始收音」。',true);clearNotice();if(badAudio())return notify('当前页面无法使用 HTTPS 麦克风接口。请在 Safari 中直接访问 HTTPS 链接。');loading=true;$('load').disabled=true;$('model').disabled=true;setState('正在加载模型');setStage('第 1 步 · 下载语音模型','正在连接 '+(MODEL_LABELS[modelChoice]||'英语')+' 所需的模型文件…',1);
 try{
@@ -284,8 +309,9 @@ async function testMic(){if(listening)return notify('请先结束收音，再进
 catch(e){await finishMicTest();$('micstatus').textContent='失败：'+String(e.message||e);notify('麦克风检测失败：'+String(e.message||e));}}
 function exportText(){return rows.map(r=>'['+mmss(r.start)+']\nEN: '+r.en+'\n中文: '+r.zh).join('\n\n');}
 function download(txt,file){const u=URL.createObjectURL(new Blob(['\ufeff',txt],{type:'text/plain;charset=utf-8'}));let a=document.createElement('a');a.href=u;a.download=file;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1300)}
+$('accurate').addEventListener('click',()=>{if(listening||loading)return notify('请先结束收音或等待模型加载完成，再切换模型。');$('model').value='small';$('model').dispatchEvent(new Event('change'));});
 $('load').addEventListener('click',loadModel);$('start').addEventListener('click',startListening);$('stop').addEventListener('click',stopListening);$('testmic').addEventListener('click',testMic);$('flush').addEventListener('click',flushSentence);$('pause').addEventListener('change',()=>{if(pendingParts.length)scheduleSentence();});
-$('model').addEventListener('change',e=>{if(listening||loading){e.target.value=modelChoice;notify('请先结束收音或等待模型加载完毕，再切换口音模式。');return;}modelChoice=e.target.value;updateAccentHint();try{localStorage.setItem(ACCENT_MODE_KEY,modelChoice);}catch(err){}if(loaded){notify('口音模式已修改。正在重新初始化页面以切换语音模型；需要重新点击「加载语音模型」。',true);window.location.reload();}else{setStage('第 1 步 · 加载语音模型','已选择'+(MODEL_LABELS[modelChoice]||'英语')+'，点击「加载语音模型」。',0);}});
+$('model').addEventListener('change',e=>{if(listening||loading){e.target.value=modelChoice;notify('请先结束收音或等待模型加载完毕，再切换口音模式。');return;}modelChoice=e.target.value;$('accurate').hidden=modelChoice!=='tiny';updateAccentHint();try{localStorage.setItem(ACCENT_MODE_KEY,modelChoice);}catch(err){}if(loaded){notify('口音模式已修改。正在重新初始化页面以切换语音模型；需要重新点击「加载语音模型」。',true);window.location.reload();}else{setStage('第 1 步 · 加载语音模型','已选择'+(MODEL_LABELS[modelChoice]||'英语')+'，点击「加载语音模型」。',0);}});
 $('big').addEventListener('click',()=>{let s=$('en').style.fontSize;if(s){$('en').style.fontSize='';$('zh').style.fontSize='';$('big').textContent='⛶ 大字幕';}else{$('en').style.fontSize='34px';$('zh').style.fontSize='49px';$('big').textContent='↙ 恢复字号';}});
 $('size').addEventListener('input',e=>{document.documentElement.style.setProperty('--subs',e.target.value+'px');$('sizevalue').textContent=e.target.value;});
 $('copy').addEventListener('click',async()=>{if(!rows.length)return notify('还没有可复制的字幕。');try{await navigator.clipboard.writeText(exportText());notify('双语字幕已复制。',true);}catch(e){notify('复制失败，可以用 TXT 导出。');}});
@@ -293,9 +319,10 @@ $('txt').addEventListener('click',()=>{if(!rows.length)return notify('还没有�
 $('srt').addEventListener('click',()=>{if(!rows.length)return notify('还没有字幕记录。');download(rows.map((r,i)=>String(i+1)+'\n'+timestamp(r.start)+' --> '+timestamp(r.end)+'\n'+r.en+'\n'+r.zh+'\n').join('\n'),'livel ingo-v2.srt'.replace(' ',''));});
 $('testzh').addEventListener('click',async()=>{let v=clean($('sample').value);if(!v)return notify('请输入英文。');$('testzh').disabled=true;clearNotice();try{let result=await translate(v);enText(v);zhText(result.text);notify('翻译完成，实际使用：'+result.engine+'。',true);}catch(e){notify('翻译服务失败：'+String(e.message||e));}finally{$('testzh').disabled=false;}});
 restoreAccentMode();
-try{const saved=localStorage.getItem(TRANSLATOR_KEY);if(saved==='smart'||saved==='memory')translatorMode=saved;}catch(e){}
+$('accurate').hidden=modelChoice!=='tiny';
+try{const saved=localStorage.getItem(TRANSLATOR_KEY);if(['auto','smart','memory'].includes(saved))translatorMode=saved;}catch(e){}
 $('translator').value=translatorMode;
-$('translator').addEventListener('change',e=>{translatorMode=e.target.value;backupNoticeShown=false;try{localStorage.setItem(TRANSLATOR_KEY,translatorMode);}catch(err){}$('translationHint').textContent=translatorMode==='smart'?'整段优先：先尝试 SimplyTranslate AI；若接口不通则回退到 MyMemory。实际使用的服务会显示在每条记录旁。':'兼容模式：仅使用 MyMemory 翻译（单次输入最多 500 字节，超长内容自动无损分段）。';});
+$('translator').addEventListener('change',e=>{translatorMode=e.target.value;backupNoticeShown=false;try{localStorage.setItem(TRANSLATOR_KEY,translatorMode);}catch(err){}$('translationHint').textContent=translatorMode==='memory'?'仅使用 MyMemory，429 后暂停请求。':translatorMode==='smart'?'优先 SimplyTranslate，失败再尝试 Lingva 和 MyMemory。':'自动尝试 Lingva、SimplyTranslate、MyMemory，失败时可打开 Google 翻译网页。';});
 if(!window.isSecureContext)notify('当前站点不是安全的 HTTPS 页面，无法申请麦克风权限。');else if(window.crossOriginIsolated!==true){$('load').disabled=true;setState('正在初始化运行环境');setStage('准备本地识别引擎','将尝试通过本站 Service Worker 激活跨源隔离，页面可能自动刷新一次。',0);setTimeout(()=>{if(window.crossOriginIsolated!==true){setState('运行环境尚未就绪');setStage('需要跨源隔离','本地模型需要跨源隔离；若当前页面无法启用，请先用下面的麦克风测试确认是否收音。',0);$('load').disabled=true;}},4500)}
 window.addEventListener('pagehide',()=>{if(micTestStream)micTestStream.getTracks().forEach(t=>t.stop());});
 </script></body></html>
