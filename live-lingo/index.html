@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a1020">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="英语语音实时识别与英中双语字幕，支持复制和导出 SRT。">
+<title>LiveLingo · 英中实时双语字幕</title>
+<style>
+:root{color-scheme:dark;--bg:#090e1b;--panel:#10192b;--panel2:#151f34;--line:#29334a;--muted:#91a1bc;--text:#eef3ff;--accent:#85e0c8;--blue:#86a9ff;--red:#ffa7a7;--subSize:clamp(24px,5vw,37px)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(ellipse 80% 40% at 52% -10%,#183753 0%,transparent 70%),var(--bg);color:var(--text);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+button,select,input{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.container{max-width:970px;margin:auto;padding:22px 22px 100px}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:31px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}.brand-icon{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;background:linear-gradient(145deg,#7cd4d5,#6578e4);font-size:23px;box-shadow:0 10px 35px #4387c944}.brand strong{display:block;font-weight:800;letter-spacing:-.5px;font-size:23px}.brand small{display:block;color:var(--muted);font-size:12px;letter-spacing:.8px}
+.pill{border:1px solid var(--line);background:#172135;border-radius:25px;padding:7px 13px;font-size:12px;font-weight:700;color:#bfcae0;display:inline-flex;align-items:center;gap:8px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#748099}.listening .dot{background:var(--accent);box-shadow:0 0 0 5px #85e0c81a;animation:blink 1.7s infinite}
+@keyframes blink{50%{opacity:.38}}h1{font-size:clamp(29px,5.8vw,45px);letter-spacing:-1.6px;line-height:1.2;margin:0 0 10px}h1 em{font-style:normal;color:var(--accent)}
+.lead{font-size:15px;color:var(--muted);margin:0 0 26px;max-width:690px}
+.stage{position:relative;overflow:hidden;border:1px solid #344564;background:linear-gradient(152deg,#172743 0%,#0e182b 46%,#10182a 100%);border-radius:24px;box-shadow:0 20px 75px #02081266;min-height:390px;padding:24px 29px 29px}
+.stage:before{content:"";position:absolute;width:330px;height:330px;background:radial-gradient(circle,#41b9bf1b,transparent 70%);right:-90px;top:-155px;pointer-events:none}
+.stage-top{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#9eb4d3;letter-spacing:.9px;font-weight:750;font-size:11px;text-transform:uppercase}.stats{display:flex;gap:15px;color:#b4c2dc}.stats b{color:#eff6ff;font-variant-numeric:tabular-nums}
+.subtitle{position:relative;padding-top:23px}.lang-label{display:flex;align-items:center;justify-content:space-between;gap:8px;color:#9eb0ce;font-size:12px;font-weight:750;letter-spacing:1.1px;margin-bottom:9px}.english{font-size:clamp(19px,3.7vw,27px);font-weight:580;line-height:1.5;letter-spacing:-.3px;min-height:65px;overflow-wrap:anywhere}.chinese{font-size:var(--subSize);line-height:1.45;font-weight:750;letter-spacing:-.6px;min-height:106px;overflow-wrap:anywhere}.placeholder{color:#72819d}.sub-divider{height:1px;background:linear-gradient(90deg,#85e0c85c,#2e3b57 70%,transparent);margin:23px 0 7px}.zh-label{color:var(--accent)}.live-tag{font-size:10px;color:#b6c5df;border:1px solid #405174;padding:2px 7px;border-radius:7px}.stage.big{min-height:68vh;display:flex;flex-direction:column;justify-content:space-between}
+.toolbar{display:flex;gap:11px;flex-wrap:wrap;align-items:center;margin:17px 0 10px}.primary{display:inline-flex;align-items:center;justify-content:center;gap:11px;padding:14px 24px;min-width:169px;font-weight:850;background:#88e0c9;color:#07231e;border:0;border-radius:13px;box-shadow:0 6px 27px #5acdac29}.primary:hover{background:#a1edd9}.stop{background:#f8b1b1;color:#35151c}.stop:hover{background:#ffc5c5}
+.secondary{color:#d9e7ff;border:1px solid #33445f;border-radius:13px;background:#172237;padding:12px 17px;font-weight:720}.secondary:hover{background:#253451}.hint{color:#8292ae;font-size:12px;margin:9px 0 24px;line-height:1.8}
+.notice{display:none;border:1px solid #665333;background:#2c241a;color:#ffe1a2;padding:11px 15px;border-radius:12px;font-size:13px;margin:16px 0}.notice.show{display:block}.notice.error{border-color:#7c3f49;background:#301e2a;color:#ffbabd}
+.settings{display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding:16px 19px;background:#101a2b;border:1px solid #28364c;border-radius:15px;margin:16px 0 27px}
+.setting{display:flex;align-items:center;gap:11px;font-size:13px;color:#a9bbd7}.setting select{background:#202e46;color:#ecf2ff;border:1px solid #374865;border-radius:9px;padding:7px 9px}.setting input{accent-color:#86e2c9;max-width:110px}
+.switch{display:flex;gap:7px;align-items:center}.switch input{accent-color:#86e2c9}.footer-note{margin-left:auto;font-size:11px;color:#7c8ca7}
+.section-header{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;margin:0 0 13px}.section-header h2{font-size:19px;letter-spacing:-.4px;margin:0}.actions{display:flex;gap:8px;flex-wrap:wrap}.mini{background:#142136;border:1px solid #304158;color:#c3d1e8;border-radius:9px;padding:8px 11px;font-size:12px;font-weight:650}
+.timeline{min-height:135px;max-height:420px;overflow:auto;border:1px solid #27364d;border-radius:16px;background:#0e1726}.empty{padding:46px 20px;text-align:center;color:#7e8eaa}.empty strong{display:block;font-weight:700;color:#b8c7df;margin-bottom:5px}
+.entry{display:grid;grid-template-columns:52px 1fr;gap:15px;padding:15px 19px;border-bottom:1px solid #25324a}.entry:last-child{border-bottom:0}.when{font-size:11px;color:#7385a2;line-height:1.6;font-variant-numeric:tabular-nums;padding-top:3px}.entry .en{font-size:14px;color:#bfcde4;line-height:1.55}.entry .zh{font-size:18px;font-weight:700;margin-top:4px;color:#e3fbf4;line-height:1.5}.entry .pending{font-weight:400;color:#889ab3;font-size:13px}
+.demo{margin-top:25px;border:1px solid #2b3a53;background:#111b2d;border-radius:16px;padding:17px}.demo h3{margin:0 0 6px;font-size:15px}.demo p{color:#8495b1;font-size:12px;margin:0 0 13px}.demo-controls{display:flex;gap:9px;flex-wrap:wrap}.demo input{flex:1 1 220px;min-width:0;padding:12px 13px;border:1px solid #364862;border-radius:9px;background:#0b1525;color:#e7f1ff}.demo .mini{font-size:13px;padding:9px 17px}
+footer{font-size:12px;color:#788aa8;margin-top:23px;line-height:1.8}footer b{color:#aebed4}
+@media(max-width:600px){.container{padding:17px 14px 70px}header{margin-bottom:27px}.stage{padding:17px 18px 24px;border-radius:19px;min-height:350px}.stats{gap:10px}.subtitle{padding-top:22px}.chinese{min-height:104px}.toolbar .primary{flex:1}.toolbar .secondary{flex:1}.settings{gap:14px;padding:14px}.footer-note{flex-basis:100%;margin:0}.entry{grid-template-columns:40px 1fr;gap:10px;padding:14px 12px}}
+@media(prefers-reduced-motion:reduce){.listening .dot{animation:none}}
+</style>
+</head>
+<body>
+<div class="container">
+<header><div class="brand"><div class="brand-icon" aria-hidden="true">◉</div><div><strong>LiveLingo</strong><small>LIVE BILINGUAL CAPTIONS</small></div></div><span class="pill" id="status" role="status"><span class="dot"></span><span id="statusText">准备就绪</span></span></header>
+<main>
+<h1>听见英语，<em>看见中文。</em></h1>
+<p class="lead">打开麦克风，英语原文与中文译文同步滚动。适合英语会议、课堂、演讲和视频外放字幕。</p>
+<section class="stage" id="stage" aria-label="实时双语字幕">
+<div class="stage-top"><span>● LIVE CAPTIONS</span><div class="stats"><span><b id="clock">00:00</b> 时长</span><span><b id="count">0</b> 句</span></div></div>
+<div class="subtitle"><div class="lang-label"><span>ENGLISH · 原声识别</span><span class="live-tag" id="mode">等待音频</span></div><div class="english placeholder" id="english" aria-live="polite">点击下方「开始收音」，在这里显示听到的英文…</div>
+<div class="sub-divider"></div><div class="lang-label zh-label"><span>中文 · 实时翻译</span><span class="live-tag" id="translationMode">待开始</span></div><div class="chinese placeholder" id="chinese" aria-live="polite">中文翻译将出现在这里</div></div>
+</section>
+<div class="toolbar"><button class="primary" id="start" type="button">🎙　开始收音</button><button class="primary stop" id="stop" type="button" hidden>■　结束收音</button><button class="secondary" id="large" type="button">⛶ 大字幕</button><button class="secondary" id="copy" type="button">⧉ 复制双语</button></div>
+<p class="hint">首次使用请允许麦克风访问。建议用最新版 Safari（iPhone）或 Chrome/Edge（电脑）。实时识别需要联网；中文通常比英文慢约一两秒，具体取决于网络。</p>
+<div class="notice" id="notice" role="alert"></div>
+<div class="settings"><label class="setting">英文口音<select id="accent"><option value="en-US">美式英语</option><option value="en-GB">英式英语</option><option value="en-AU">澳式英语</option></select></label><label class="setting">字幕大小<input id="size" type="range" min="22" max="54" value="35"><span id="sizeText">35</span></label><label class="setting switch"><input id="keep" type="checkbox">保持屏幕常亮</label><span class="footer-note">仅在当前页面保留会话记录</span></div>
+<div class="section-header"><h2>字幕记录 <span id="total" style="color:#6f89a8;font-size:13px">0 条</span></h2><div class="actions"><button class="mini" id="txt" type="button">导出 TXT</button><button class="mini" id="srt" type="button">导出 SRT</button><button class="mini" id="clear" type="button">清空</button></div></div>
+<section class="timeline" id="timeline" aria-label="双语字幕记录"><div class="empty"><strong>你的双语字幕将记录在这里</strong>识别、翻译后可以复制或保存为字幕文件。</div></section>
+<section class="demo"><h3>💬 无麦克风也可测试翻译</h3><p>输入一段英文，可以先检查网络与中译功能是否正常。</p><div class="demo-controls"><input id="sample" type="text" maxlength="450" placeholder="例如：Welcome to today's presentation."><button class="mini" id="test" type="button">翻译这句话 →</button></div></section>
+</main>
+<footer><b>关于隐私与使用：</b>网页本身不上传或保存字幕到自己的服务器；语音识别可能由浏览器语音服务处理，文本译文由浏览器内置翻译（若可用）或第三方 MyMemory API 处理。免费翻译有每日使用额度，并非专业同传服务。建议勿用于机密内容。保持页面前台打开；锁屏或切换应用可能暂停识别。此网页只能直接采集麦克风，不能无权限读取其他应用的内部音频。</footer>
+</div>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
+let recognition=null,desired=false,active=false,blocked=false,sessionStart=0,elapsedBefore=0,ticker=null,seen=new Set(),rows=[],liveInterim="",liveEn="",liveZh="",lastZh="",previewTimer=null,previewAbort=null,previewToken=0,previewAt=0,autoRetry=null,wake=null,translator=null,translatorInit=false;
+const cache=new Map(),maxCache=120;
+function showNotice(msg,kind){let n=$("notice");n.textContent=msg;n.className="notice show"+(kind==="error"?" error":"")}
+function hideNotice(){$("notice").className="notice"}
+function status(msg,isOn){$("statusText").textContent=msg;$("status").classList.toggle("listening",!!isOn)}
+function escapedTime(s){const t=Math.max(0,Math.round(s));return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0")}
+function srtTime(s){const ms=Math.max(0,Math.round(s*1000)),h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),sec=Math.floor(ms%60000/1000),rem=ms%1000;return [h,m,sec].map(x=>String(x).padStart(2,"0")).join(":")+","+String(rem).padStart(3,"0")}
+function elapsed(){return sessionStart?(performance.now()-sessionStart)/1000+elapsedBefore:elapsedBefore}
+function updateClock(){$("clock").textContent=escapedTime(elapsed())}
+function setLive(en,zh,isInterim){if(en!==undefined){liveEn=en;$("english").textContent=en||"正在聆听英语…";$("english").classList.toggle("placeholder",!en)}if(zh!==undefined){liveZh=zh;$("chinese").textContent=zh||"等待下一段英文…";$("chinese").classList.toggle("placeholder",!zh||zh==="正在翻译…")}$("mode").textContent=isInterim?"识别中":desired?"正在收听":"已停用"}
+function renderTimeline(){let t=$("timeline");t.replaceChildren();$("count").textContent=String(rows.length);$("total").textContent=rows.length+" 条";if(!rows.length){let e=document.createElement("div");e.className="empty";e.innerHTML="<strong>你的双语字幕将记录在这里</strong>识别、翻译后可以复制或保存为字幕文件。";t.append(e);return}let f=document.createDocumentFragment();rows.forEach(r=>{let e=document.createElement("article");e.className="entry";let w=document.createElement("span");w.className="when";w.textContent=escapedTime(r.start);let c=document.createElement("div"),a=document.createElement("div"),b=document.createElement("div");a.className="en";a.textContent=r.en;b.className="zh"+(r.pending?" pending":"");b.textContent=r.zh||"翻译中…";c.append(a,b);e.append(w,c);f.append(e)});t.append(f);t.scrollTop=t.scrollHeight}
+function trimSpace(s){return String(s||"").replace(/\s+/g," ").trim()}
+async function getTranslator(){if(translatorInit)return translator;translatorInit=true;try{if("Translator" in window&&typeof window.Translator.availability==="function"){let opts={sourceLanguage:"en",targetLanguage:"zh"};let a=await window.Translator.availability(opts);if(a==="available"||a==="downloadable"){translator=await window.Translator.create(opts);$("translationMode").textContent="本机翻译"}}}catch(e){translator=null}return translator}
+function htmlDecode(x){let area=document.createElement("textarea");area.innerHTML=x;return area.value}
+async function translateText(en,signal){en=trimSpace(en);if(!en)return"";if(cache.has(en))return cache.get(en);let result="";let loc=await getTranslator();if(loc){try{result=await loc.translate(en)}catch(e){result=""}}if(!result){let url=new URL("https://api.mymemory.translated.net/get");url.searchParams.set("q",en.slice(0,450));url.searchParams.set("langpair","en|zh-CN");let r=await fetch(url.toString(),{signal:signal,cache:"no-store"});if(!r.ok)throw new Error("翻译接口 HTTP "+r.status);let data=await r.json();if(data.responseStatus!==200||!data.responseData||!data.responseData.translatedText)throw new Error(data.responseDetails||"翻译服务暂时不可用");result=htmlDecode(String(data.responseData.translatedText));if(/MYMEMORY WARNING|YOU USED ALL/i.test(result))throw new Error("免费翻译额度已用完")}cache.set(en,result);if(cache.size>maxCache)cache.delete(cache.keys().next().value);$("translationMode").textContent=loc?"本机翻译":"在线翻译"}return result}
+function beginTranslate(row){translateText(row.en).then(zh=>{row.zh=zh;row.pending=false;lastZh=zh;if(!liveInterim&&liveEn===row.en)setLive(undefined,zh,false);renderTimeline()}).catch(e=>{row.zh="翻译失败 · "+String(e.message||e);row.pending=false;if(!liveInterim&&liveEn===row.en)setLive(undefined,row.zh,false);showNotice("中文翻译失败："+String(e.message||e)+"。请检查网络或稍后重试。","error");renderTimeline()})}
+function addRow(en){en=trimSpace(en);if(!en)return;let end=elapsed();let start=Math.max(0,Math.max(rows.length?rows[rows.length-1].end:0,end-Math.max(1.2,en.split(/\s+/).length*.36)));let r={en:en,zh:"",pending:true,start:start,end:Math.max(start+.7,end)};rows.push(r);renderTimeline();setLive(en,"正在翻译…",false);beginTranslate(r)}
+function cancelPreview(){clearTimeout(previewTimer);if(previewAbort)previewAbort.abort();previewAbort=null;previewToken++}
+function schedulePreview(en){cancelPreview();en=trimSpace(en);if(en.split(/\s+/).length<3)return;let token=previewToken;let delay=Math.max(800,2600-(Date.now()-previewAt));previewTimer=setTimeout(async()=>{if(token!==previewToken||!desired)return;previewAt=Date.now();let c=new AbortController();previewAbort=c;try{let zh=await translateText(en,c.signal);if(token===previewToken&&liveInterim===en)setLive(undefined,zh,true)}catch(e){}},delay)}
+function updateInterim(s){s=trimSpace(s);if(s===liveInterim)return;liveInterim=s;if(s){setLive(s,"正在翻译…",true);schedulePreview(s)}else{cancelPreview()}}
+function onSpeechResult(ev){let interim="";for(let i=ev.resultIndex;i<ev.results.length;i++){let r=ev.results[i],t=trimSpace(r[0].transcript);if(r.isFinal){if(t&&!seen.has(i)){seen.add(i);cancelPreview();liveInterim="";addRow(t)}}else if(t)interim+=t+" "}if(interim.trim())updateInterim(interim);else if(!ev.results.length&&desired)updateInterim("")}
+function stopWake(){if(wake){wake.release().catch(()=>{});wake=null}}
+async function startWake(){if(!$("keep").checked||!navigator.wakeLock)return;try{wake=await navigator.wakeLock.request("screen")}catch(e){}}
+function createRecognition(){let rec=new Speech();rec.lang=$("accent").value;rec.continuous=true;rec.interimResults=true;rec.maxAlternatives=1;rec.onstart=()=>{active=true;blocked=false;hideNotice();status("正在识别",true);$("mode").textContent="正在听";};rec.onresult=onSpeechResult;rec.onerror=e=>{let code=e.error||"unknown";if(code==="no-speech"||code==="aborted")return;if(["not-allowed","service-not-allowed","audio-capture"].includes(code)){blocked=true;desired=false;finish("无麦克风权限");showNotice(code==="audio-capture"?"无法访问麦克风，请检查设备。":"麦克风被拒绝或浏览器语音服务不可用。请在 Safari/Chrome 中打开并允许麦克风，确保网络可用。","error")}else{showNotice("语音识别暂时中断（"+code+"），将尝试自动恢复。","error")}};rec.onend=()=>{active=false;if(desired&&!blocked){status("尝试重新连接",false);clearTimeout(autoRetry);autoRetry=setTimeout(()=>{if(desired)try{seen.clear();rec.start()}catch(e){showNotice("重新启动失败，请点击结束后再次开始。","error");finish("已暂停")}},650)}else{status("已停止",false)}};return rec}
+function finish(msg){desired=false;clearTimeout(autoRetry);cancelPreview();if(sessionStart){elapsedBefore=elapsed();sessionStart=0}clearInterval(ticker);updateClock();$("start").hidden=false;$("stop").hidden=true;status(msg||"已停止",false);$("mode").textContent="已结束";stopWake();if(recognition){try{recognition.stop()}catch(e){}}}
+function start(){if(!Speech){showNotice("当前浏览器不支持网页语音识别。请使用 iPhone Safari 或电脑 Chrome/Edge；下方仍可手动测试翻译。","error");return}if(desired)return;hideNotice();desired=true;blocked=false;seen.clear();liveInterim="";lastZh="";elapsedBefore=0;sessionStart=performance.now();updateClock();clearInterval(ticker);ticker=setInterval(updateClock,600);$("start").hidden=true;$("stop").hidden=false;setLive("正在连接麦克风…","识别出英语后会开始翻译…",false);status("正在申请麦克风",false);try{recognition=createRecognition();recognition.start();startWake()}catch(e){finish("启动失败");showNotice("无法启动语音识别："+e.message+"。建议用 Safari/Chrome 打开 HTTPS 页面。","error")}}
+function makeText(){return rows.map(r=>"["+escapedTime(r.start)+"]\nEN  "+r.en+"\n中文  "+(r.pending?"":r.zh)).join("\n\n")}
+function download(content,filename,mime){let u=URL.createObjectURL(new Blob(["\ufeff",content],{type:mime})),a=document.createElement("a");a.href=u;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500)}
+function copyText(){if(!rows.length){showNotice("还没有字幕记录。先开始识别或测试一句英文。");return}let s=makeText();if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(s).then(()=>showNotice("双语字幕已复制。"),()=>showNotice("无法复制，请使用导出 TXT。","error"));else{let ta=document.createElement("textarea");ta.value=s;document.body.append(ta);ta.select();let ok=document.execCommand("copy");ta.remove();showNotice(ok?"双语字幕已复制。":"复制失败，请使用导出 TXT。",ok?"":"error")}}
+$("start").addEventListener("click",start);$("stop").addEventListener("click",()=>finish("已停止"));$("copy").addEventListener("click",copyText);
+$("large").addEventListener("click",()=>{let big=$("stage").classList.toggle("big");$("large").textContent=big?"↙ 缩小字幕":"⛶ 大字幕";if(big)$("stage").scrollIntoView({block:"start",behavior:"smooth"})});
+$("size").addEventListener("input",e=>{document.documentElement.style.setProperty("--subSize",e.target.value+"px");$("sizeText").textContent=e.target.value;try{localStorage.setItem("ll-size",e.target.value)}catch(x){}});
+$("accent").addEventListener("change",()=>{if(desired)showNotice("新口音将在下次点击「开始收音」时生效。")});
+$("keep").addEventListener("change",e=>{if(e.target.checked&&desired)startWake();else stopWake()});
+$("txt").addEventListener("click",()=>{if(rows.length)download(makeText(),"livel ingo-bilingual.txt".replace(" ",""),"text/plain;charset=utf-8");else showNotice("还没有字幕可导出。")});
+$("srt").addEventListener("click",()=>{if(!rows.length){showNotice("还没有字幕可导出。");return}let s=rows.map((r,i)=>String(i+1)+"\n"+srtTime(r.start)+" --> "+srtTime(r.end)+"\n"+r.en+"\n"+(r.pending?"":r.zh)+"\n").join("\n");download(s,"livel ingo-bilingual.srt".replace(" ",""),"text/plain;charset=utf-8")});
+$("clear").addEventListener("click",()=>{if(!rows.length)return;if(!window.confirm("清空当前所有字幕记录？此操作无法撤销。"))return;rows=[];renderTimeline();showNotice("字幕记录已清空。")});
+$("test").addEventListener("click",async()=>{let text=trimSpace($("sample").value);if(!text){showNotice("请先输入英文句子。");return}hideNotice();let btn=$("test");btn.disabled=true;btn.textContent="正在翻译…";let t=elapsed();let r={en:text,zh:"",pending:true,start:t,end:t+3};rows.push(r);renderTimeline();setLive(text,"正在翻译…",false);try{let translated=await translateText(text);r.zh=translated;r.pending=false;setLive(text,translated,false)}catch(e){r.zh="翻译失败 · "+String(e.message||e);r.pending=false;setLive(text,r.zh,false);showNotice("翻译失败："+String(e.message||e),"error")}finally{renderTimeline();btn.disabled=false;btn.textContent="翻译这句话 →"}});
+$("sample").addEventListener("keydown",e=>{if(e.key==="Enter")$("test").click()});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&desired&&$("keep").checked)startWake()});
+try{let v=localStorage.getItem("ll-size");if(v&&Number(v)>=22&&Number(v)<=54){$("size").value=v;$("sizeText").textContent=v;document.documentElement.style.setProperty("--subSize",v+"px")}}catch(e){}
+if(!Speech){status("浏览器不支持收音",false);showNotice("该浏览器没有提供语音识别接口；可以用下方文本输入测试翻译。iPhone 建议在 Safari 中打开，而不是应用内置浏览器。","error")}
+})();
+</script>
+</body>
+</html>
