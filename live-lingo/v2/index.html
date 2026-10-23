@@ -33,6 +33,39 @@ button,input,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.
 <div class="box2"><h3>💬 不用麦克风也能检测中文翻译</h3><p>如果英文能识别而中文不出现，可用这里单独测试网络翻译。</p><div class="diag"><input id="sample" value="Welcome to today's presentation." aria-label="测试英文文本"><button class="tiny" id="testzh">翻译测试</button></div></div>
 <p class="hint">隐私：设备端识别时，语音音频不会上传至本应用服务器；首次会从 Moonshine 下载模型。英文文本将发送给 MyMemory 进行中译，不适合涉及机密的会议。浏览器后台或锁屏可能中断收音。本页面不支持直接收取其他 App 的内部声音。<br>实验版：对不同 iPhone 机型、移动网络和浏览器尚未完成实机验证。如遇性能、模型下载或权限问题，页面会展示错误信息。</p>
 </div>
+<script>
+/* A scoped service worker adds COOP/COEP to top-level navigations.
+   Static CDNs generally do not supply those headers themselves. */
+(function(){
+  if (window.crossOriginIsolated === true) return;
+  const key = 'll-coi-once:' + location.pathname;
+  function warn(msg){
+    const n=document.getElementById('notice');
+    n.textContent=msg;n.className='message show';
+    document.getElementById('load').disabled=true;
+    document.getElementById('detail').textContent=msg;
+  }
+  if (!window.isSecureContext || !navigator.serviceWorker) {
+    warn('当前浏览器不支持本地流式识别所需的安全环境或 Service Worker。可以先使用下方「检测麦克风」。');
+    return;
+  }
+  function reloadOnce(){
+    if (sessionStorage.getItem(key) === '1') return;
+    sessionStorage.setItem(key,'1');
+    location.reload();
+  }
+  navigator.serviceWorker.addEventListener('controllerchange',reloadOnce);
+  navigator.serviceWorker.register('./coi-sw.js',{scope:'./'})
+   .then(async reg=>{
+      if (!navigator.serviceWorker.controller) {
+        if (reg.active) reloadOnce();
+        return;
+      }
+      if (!window.crossOriginIsolated) reloadOnce();
+   })
+   .catch(err=>warn('无法开启本地语音引擎所需的隔离模式：'+(err.message||err)+'。此链接的托管服务可能不支持，请先用「检测麦克风」测试收音。'));
+})();
+</script>
 <script type="module">
 const $=(id)=>document.getElementById(id);
 const SDK='https://cdn.jsdelivr.net/npm/@moonshine-ai/moonshine-wasm@0.1.5/dist/index.js';
@@ -54,7 +87,7 @@ function badAudio(){return !navigator.mediaDevices||!navigator.mediaDevices.getU
 function onText(text){if(!listening)return;let s=clean(typeof text==='string'?text:(text&&text.text));if(!s)return;interim=s;enText(s);$('state').textContent='实时识别中';}
 function onLine(line){const text=clean(typeof line==='string'?line:line&&line.text);if(!text||!listening)return;interim='';enText(text);zhText('正在翻译…');let end=seconds(),start=Math.max(rows.length?rows[rows.length-1].end:0,end-Math.max(1.2,text.split(' ').length*.36));let row={en:text,zh:'',start,end:Math.max(start+1,end)};rows.push(row);showRows();translate(text).then(zh=>{row.zh=zh;if($('en').textContent===text)zhText(zh);showRows()}).catch(err=>{row.zh='翻译失败：'+String(err.message||err);if($('en').textContent===text)zhText(row.zh);showRows();notify('语音已识别成功，但翻译服务暂时失败：'+String(err.message||err));})}
 async function translate(text){let url='https://api.mymemory.translated.net/get?q='+encodeURIComponent(text.slice(0,450))+'&langpair=en%7Czh-CN';let res=await fetch(url,{cache:'no-store'});if(!res.ok)throw Error('翻译接口 '+res.status);let data=await res.json();if(data.responseStatus!==200||!data.responseData||!data.responseData.translatedText)throw Error(data.responseDetails||'没有返回译文');let tmp=document.createElement('textarea');tmp.innerHTML=String(data.responseData.translatedText);return tmp.value;}
-async function loadModel(){if(loading||listening)return;if(loaded)return notify('模型已经准备好了，点击「开始收音」。',true);clearNotice();if(badAudio())return notify('当前页面无法使用 HTTPS 麦克风接口。请在 Safari 中直接访问 HTTPS 链接。');loading=true;$('load').disabled=true;$('model').disabled=true;setState('正在加载模型');setStage('第 1 步 · 下载语音模型','正在连接模型文件服务…',1);
+async function loadModel(){if(window.crossOriginIsolated!==true)return notify('本地语音引擎尚未获得必要的跨源隔离权限。请刷新页面，或使用下方「检测麦克风」区分麦克风与模型问题。');if(loading||listening)return;if(loaded)return notify('模型已经准备好了，点击「开始收音」。',true);clearNotice();if(badAudio())return notify('当前页面无法使用 HTTPS 麦克风接口。请在 Safari 中直接访问 HTTPS 链接。');loading=true;$('load').disabled=true;$('model').disabled=true;setState('正在加载模型');setStage('第 1 步 · 下载语音模型','正在连接模型文件服务…',1);
 try{
 if(!Moonshine){const module=await import(SDK);if(!module.MicTranscriber||!module.ModelArch)throw Error('语音引擎组件不可用');Moonshine=module;}
 let arch=modelChoice==='base'?Moonshine.ModelArch.BaseStreaming:Moonshine.ModelArch.TinyStreaming;
@@ -80,6 +113,6 @@ $('copy').addEventListener('click',async()=>{if(!rows.length)return notify('还�
 $('txt').addEventListener('click',()=>{if(!rows.length)return notify('还没有字幕记录。');download(exportText(),'livel ingo-v2.txt'.replace(' ',''));});
 $('srt').addEventListener('click',()=>{if(!rows.length)return notify('还没有字幕记录。');download(rows.map((r,i)=>String(i+1)+'\n'+timestamp(r.start)+' --> '+timestamp(r.end)+'\n'+r.en+'\n'+r.zh+'\n').join('\n'),'livel ingo-v2.srt'.replace(' ',''));});
 $('testzh').addEventListener('click',async()=>{let v=clean($('sample').value);if(!v)return notify('请输入英文。');$('testzh').disabled=true;clearNotice();try{let zh=await translate(v);enText(v);zhText(zh);notify('中译接口可用。',true);}catch(e){notify('翻译服务失败：'+String(e.message||e));}finally{$('testzh').disabled=false;}});
-if(!window.isSecureContext)notify('当前站点不是安全的 HTTPS 页面，无法申请麦克风权限。');
+if(!window.isSecureContext)notify('当前站点不是安全的 HTTPS 页面，无法申请麦克风权限。');else if(window.crossOriginIsolated!==true){$('load').disabled=true;setState('正在初始化运行环境');setStage('准备本地识别引擎','将尝试通过本站 Service Worker 激活跨源隔离，页面可能自动刷新一次。',0);setTimeout(()=>{if(window.crossOriginIsolated!==true){setState('运行环境尚未就绪');setStage('需要跨源隔离','本地模型需要跨源隔离；若当前页面无法启用，请先用下面的麦克风测试确认是否收音。',0);$('load').disabled=true;}},4500)}
 window.addEventListener('pagehide',()=>{if(micTestStream)micTestStream.getTracks().forEach(t=>t.stop());});
 </script></body></html>
